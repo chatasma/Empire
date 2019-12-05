@@ -3,7 +3,7 @@ import pg from 'pg';
 import config from '../config';
 import apiRoute from './routes/api'
 
-const PORT = config.api_port ? config.api_port : 5000;
+const PORT = config.api && config.api.api_port ? config.api.api_port : 5000;
 
 export const pgClient : pg.Client = new pg.Client({
     user: config.user,
@@ -40,7 +40,5 @@ async function register() {
 
     app.listen(PORT, () => console.log(`Empire API running on PORT ${PORT}`));
 }
-
-
 
 export default register;
