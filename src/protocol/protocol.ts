@@ -11,9 +11,12 @@ function parseRawProtocolRequest(protocolId : number, parameters : string[]) : P
             case 1:
                 callbackFn = getChillUser;
                 break;
+            case 2:
+                callbackFn = createChillUser;
+                break;
             default:
                 callbackFn = () => {
-                    return "Invalid Protocol ID";
+                    return {error: "Invalid Protocol ID"};
                 };
         }
 
@@ -33,6 +36,34 @@ function parseRawProtocolRequest(protocolId : number, parameters : string[]) : P
 /*
  * Protocol
  */
+
+function createChillUser(parameters: string[]) {
+    return new Promise(async (resolve, reject) => {
+        let fetchResponse : Response;
+        let fetchResult;
+        try {
+            fetchResponse = await fetch(API_BASE + '/api/player/' + parameters[0], {
+                method: 'POST',
+                headers: {
+                    Authorization: config.api.api_token
+                }
+            });
+            fetchResult = await fetchResponse.json();
+        } catch (e) {
+            reject({content: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR), statusCode: HttpStatus.INTERNAL_SERVER_ERROR});
+            return;
+        }
+
+        if (fetchResponse.status !== HttpStatus.OK) {
+            const contentMessage = fetchResult && fetchResult.message ? fetchResult.message : HttpStatus.getStatusText(fetchResponse.status);
+            reject({content: contentMessage, statusCode: fetchResponse.status});
+            return;
+        }
+
+        resolve({content: fetchResult, statusCode: HttpStatus.OK});
+    });
+}
+
 
 function getChillUser(parameters : string[]) {
     return new Promise(async (resolve, reject) => {

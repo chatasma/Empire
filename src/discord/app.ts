@@ -17,7 +17,7 @@ function register() {
     const requestAuthors : string[] = config.discord.request_authors ? config.discord.request_authors : [];
 
     client.on('message', async (msg: Discord.Message) => {
-         if (msg.author.id === client.user.id || !msg.author.bot || !requestAuthors.includes(msg.author.id)) return;
+        //  if (msg.author.id === client.user.id || !msg.author.bot || !requestAuthors.includes(msg.author.id)) return;
          const content : string = msg.cleanContent;
          if (!content.includes(`<${config.discord.message_header} REQUEST>`)) return;
          const requestContent : string = content.split('```')[1].replace(/(?:\r\n|\r|\n)/g, '');

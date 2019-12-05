@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import HttpStatus from 'http-status-codes';
 import { getChillStats, parseChillError, createChillStats, ChillError } from '../util/util';
+import tokenCheck from '../auth/tokenCheck';
 
 const router : Router = Router();
 
@@ -15,11 +16,10 @@ router.get("/player/:userUuid", async (req : express.Request, res: express.Respo
 });
 
 
-router.post("/player/:userUuid", async (req : express.Request, res: express.Response) => {
+router.post("/player/:userUuid", tokenCheck, async (req : express.Request, res: express.Response) => {
     let chillStats;
     try {
         chillStats = await getChillStats(req.params.userUuid);
-        console.log('Already exists, heading OUT early');
     } catch(e) {
         if (e.chillError === ChillError.INVALID_UUID) {
             return res.status(e.httpError).send(parseChillError(e.httpError, e.chillError));
