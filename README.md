@@ -2,7 +2,7 @@
 API server and Discord Bot feeder for Team Empire. Serves statistics of players to clients.
 
 
-## Setup
+# Setup
 1. Clone the repository.
 ```
 git clone https://github.com/ThatOneTqnk/Empire.git empire
@@ -14,7 +14,11 @@ cd empire
 npm install
 ```
 
-3. Create configuration in `src/config.ts`. Example configuration:
+3. Create Discord bot at https://discordapp.com/developers/applications/. Add a public bot user and save the token for the configuration.
+
+4. Setup a PostgreSQL database. This is required for the API.
+
+5. Create configuration in `src/config.ts`. Example configuration:
 ```ts
 const config : any = {
     "user": "DATABASE_USER",
@@ -40,7 +44,7 @@ export default config;
 ```
 
 
-3. Run application in developer mode.
+6. Run application in developer mode. Uses `nodemon` for live changes.
 ```
 npm run dev
 ```
