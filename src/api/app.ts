@@ -1,7 +1,8 @@
 import express from 'express';
 import pg from 'pg';
 import config from '../config';
-import apiRoute from './routes/api'
+import apiRoute from './routes/api';
+import { SQLTableStatements } from '../db/models/models';
 
 const PORT = config.api && config.api.api_port ? config.api.api_port : 5000;
 
@@ -15,8 +16,9 @@ export const pgClient : pg.Client = new pg.Client({
 
 function initializeTables() {
     return new Promise(async (resolve, reject) => {
-        await pgClient.query("CREATE TABLE IF NOT EXISTS ChillStats(id SERIAL PRIMARY KEY, msgo_wins INT DEFAULT 0)");
-        await pgClient.query("CREATE TABLE IF NOT EXISTS ChillUser(uuid CHAR(36) PRIMARY KEY, stats integer REFERENCES ChillStats)");
+        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillGamemodeMetric}`);
+        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillStats}`);
+        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillUser}`);
         resolve();
     });
 }

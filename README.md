@@ -16,7 +16,7 @@ npm install
 
 3. Create Discord bot at https://discordapp.com/developers/applications/. Add a public bot user and save the token for the configuration.
 
-4. Setup a PostgreSQL database. This is required for the API.
+4. Setup a PostgreSQL database. This is required for the API. Tables will be created automatically when application runs.
 
 5. Create configuration in `src/config.ts`. Example configuration:
 ```ts

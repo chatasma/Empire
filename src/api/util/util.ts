@@ -56,8 +56,8 @@ export function createChillStats(inStr: string, skipUuidCheck: boolean) {
             }
         }
 
-        const newStatsResult : pg.QueryResult = await pgClient.query('INSERT INTO ChillStats DEFAULT VALUES RETURNING id;');
-        const newUserResult : pg.QueryResult = await pgClient.query(`INSERT INTO ChillUser(uuid, stats) VALUES($1, lastval())`, [inStr]);
+        await pgClient.query('INSERT INTO ChillStats DEFAULT VALUES RETURNING id;');
+        await pgClient.query(`INSERT INTO ChillUser(uuid, stats) VALUES($1, lastval())`, [inStr]);
         
 
         let chillStats;
