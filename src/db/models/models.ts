@@ -11,12 +11,18 @@ export interface ChillUser {
 }
 
 export function isChillUser(obj : any) {
+    if (obj == null) return false;
     return 'uuid' in obj && 'stats' in obj;
 }
 
 export interface ChillStats {
     id: number,
     wins: number[] | ChillGamemodeMetric[]
+}
+
+export function isChillStats(obj : any) {
+    if (obj == null) return false;
+    return 'id' in obj && 'wins' in obj;
 }
 
 export interface ChillGamemodeMetric {
@@ -26,7 +32,7 @@ export interface ChillGamemodeMetric {
 }
 
 export const SQLTableStatements = Object.freeze({
-    "ChillUser": "ChillUser(uuid CHAR(36) PRIMARY KEY, stats integer REFERENCES ChillStats)",
-    "ChillStats": "ChillStats(id SERIAL PRIMARY KEY, wins integer REFERENCES ChillGamemodeMetric)",
+    "ChillUser": "ChillUser(uuid CHAR(36) PRIMARY KEY, stats integer)",
+    "ChillStats": "ChillStats(id SERIAL PRIMARY KEY, wins integer[] DEFAULT '{}')",
     "ChillGamemodeMetric": "ChillGamemodeMetric(id SERIAL PRIMARY KEY, gametype VARCHAR(16), amount integer)"
 });

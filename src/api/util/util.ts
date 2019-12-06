@@ -1,6 +1,8 @@
 import pg from 'pg';
 import { pgClient } from '../app'
 import HttpStatus from 'http-status-codes';
+import { ChillUser } from '../../db/models/models';
+import { parseChillUser } from '../../db/parse/parser';
 
 export function validateUuid(inStr : string) {
     const regexResult : RegExpMatchArray | null = inStr.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
@@ -14,15 +16,13 @@ export function getChillStats(inStr: string) {
             reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.INVALID_UUID});
             return;
         }
-        const initialDbCheck : pg.QueryResult = await pgClient.query(`SELECT * FROM ChillUser WHERE uuid = '${inStr}';`);
+        const initialDbCheck : pg.QueryResult = await pgClient.query(`SELECT * FROM ChillUser WHERE uuid = '${inStr}'`);
         if (initialDbCheck.rowCount === 0) {
             reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.NO_USER});
             return;
         }
-        const statsDbCheck : pg.QueryResult = await pgClient.query(`SELECT * FROM ChillStats WHERE id = '${initialDbCheck.rows[0].stats}'`);
-        const chillUser = initialDbCheck.rows[0];
-        chillUser.stats = statsDbCheck.rows[0];
-        resolve(chillUser);
+        const parsedChillUser : ChillUser = await parseChillUser(<ChillUser> initialDbCheck.rows[0]);
+        resolve(parsedChillUser);
     });
 }
 

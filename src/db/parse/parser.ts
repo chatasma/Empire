@@ -1,4 +1,4 @@
-import { ChillUser, ChillStats, ChillGamemodeMetric, Nullable, isChillUser } from "../models/models";
+import { ChillUser, ChillStats, ChillGamemodeMetric, Nullable, isChillUser, isChillStats } from "../models/models";
 import { pgClient } from "../../api/app";
 import { generateDynamicParams } from '../util/dbutil';
 
@@ -11,7 +11,7 @@ export function parseChillUser(obj : ChillUser) : Promise<ChillUser> {
     return new Promise(async (resolve, reject) => {
         if (typeof obj.stats === "number") {
             const chillStats : Nullable<ChillStats> = await parseChillStatsReference(obj.stats);
-            if (isChillUser(chillStats)) {
+            if (isChillStats(chillStats)) {
                 const castedChillStats = <ChillStats> chillStats;
                 obj.stats = castedChillStats;
             }
@@ -24,7 +24,7 @@ export function parseChillStatsReference(ref : number) : Promise<Nullable<ChillS
     return new Promise(async (resolve, reject) => {
         const chillStatsResult = await pgClient.query(`SELECT * FROM ChillStats WHERE id = ${ref}`);
         const preCastedResult : Nullable<ChillStats> = <Nullable<ChillStats>> chillStatsResult.rows[0];
-        if (!isChillUser(preCastedResult)) {
+        if (!isChillStats(preCastedResult)) {
             resolve(null);
             return;
         }
