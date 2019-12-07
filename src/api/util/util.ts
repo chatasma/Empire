@@ -1,28 +1,51 @@
 import pg from 'pg';
 import { pgClient } from '../app'
 import HttpStatus from 'http-status-codes';
-import { ChillUser } from '../../db/models/models';
-import { parseChillUser } from '../../db/parse/parser';
+import { ChillUser, ChillNumericMetric, PrettyChillUser } from '../../db/models/models';
 
 export function validateUuid(inStr : string) {
     const regexResult : RegExpMatchArray | null = inStr.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
     return regexResult;
 }
 
-export function getChillStats(inStr: string) {
+export function getChillStats(inStr: string) : Promise<PrettyChillUser> {
     return new Promise(async (resolve, reject) => {
         const regexResult = validateUuid(inStr);
         if (regexResult == null) {
             reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.INVALID_UUID});
             return;
         }
-        const initialDbCheck : pg.QueryResult = await pgClient.query(`SELECT * FROM ChillUser WHERE uuid = '${inStr}'`);
-        if (initialDbCheck.rowCount === 0) {
-            reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.NO_USER});
+
+        const userCheck : pg.QueryResult = await pgClient.query(`SELECT * FROM ChillUser WHERE uuid = $1`, [inStr]);
+        
+        if (userCheck.rowCount === 0) {
+            reject({httpError: HttpStatus.NOT_FOUND, chillError: ChillError.NO_USER});
             return;
         }
-        const parsedChillUser : ChillUser = await parseChillUser(<ChillUser> initialDbCheck.rows[0]);
-        resolve(parsedChillUser);
+
+        const retrievedUser : ChillUser = userCheck.rows[0];
+        
+        const metricCheck : pg.QueryResult = await pgClient.query(`SELECT * FROM ChillNumericMetric WHERE uuid = $1 AND metric IN ($2, $3)`, [inStr, 'wins', 'losses']);
+        
+        const wins : {gametype: string, amount: number}[] = [];
+        const losses : {gametype: string, amount: number}[] = [];
+
+        for (let row of metricCheck.rows) {
+            if (row == null) continue;
+            const castedRow = <ChillNumericMetric> row;
+            const filteredMetric : {gametype: string, amount: number} = {gametype: castedRow.gametype, amount: castedRow.amount};
+            if (castedRow.metric === 'wins') wins.push(filteredMetric);
+            else losses.push(filteredMetric);
+        }
+
+        const prettyChillUser : PrettyChillUser = {
+            uuid: inStr,
+            wins: wins,
+            losses: losses,
+            matches: retrievedUser.matches
+        } 
+
+        resolve(prettyChillUser);
     });
 }
 
@@ -46,7 +69,7 @@ export function assembleDynamicUpdateParams(tablename : string, cols : object, f
     return query.join(' ');
 }
 
-export function createChillStats(inStr: string, skipUuidCheck: boolean) {
+export function createChillStats(inStr: string, skipUuidCheck: boolean) : Promise<PrettyChillUser> {
     return new Promise(async (resolve, reject) => {
         if (!skipUuidCheck) {
             const regexResult = validateUuid(inStr);
@@ -56,11 +79,10 @@ export function createChillStats(inStr: string, skipUuidCheck: boolean) {
             }
         }
 
-        await pgClient.query('INSERT INTO ChillStats DEFAULT VALUES RETURNING id;');
-        await pgClient.query(`INSERT INTO ChillUser(uuid, stats) VALUES($1, lastval())`, [inStr]);
+        await pgClient.query(`INSERT INTO ChillUser(uuid) VALUES($1)`, [inStr]);
         
 
-        let chillStats;
+        let chillStats : PrettyChillUser;
         try {
             chillStats = await getChillStats(inStr);
         } catch(e) {
@@ -79,5 +101,6 @@ export function parseChillError(httpStatusCode: number, chillErr: string | null)
 export const ChillError = Object.freeze({
     "INVALID_UUID": "UUID is not valid",
     "NO_USER": "No user profile found",
-    "INTERNAL_ERROR": null
+    "INTERNAL_ERROR": null,
+    "INVALID_GAMETYPE": "Not a valid gametype"
 });

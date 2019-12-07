@@ -16,9 +16,11 @@ export const pgClient : pg.Client = new pg.Client({
 
 function initializeTables() {
     return new Promise(async (resolve, reject) => {
-        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillGamemodeMetric}`);
-        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillStats}`);
+        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillMatch}`);
+        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillNumericMetric}`);
         await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.ChillUser}`);
+        await pgClient.query(`CREATE TABLE IF NOT EXISTS ${SQLTableStatements.MsgoMatchInfo}`);
+
         resolve();
     });
 }

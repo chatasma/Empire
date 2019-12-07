@@ -27,23 +27,36 @@ function register() {
          splitRequest.shift();
 
          const params : string = splitRequest.join('');
-         let orderedParams : string[] = params.split(',');
-
-         orderedParams = orderedParams.map((val : string) => {
-             return val.trim();
-         });
+         const preSerializedParams : (string|string[])[] | null = serializeStringIntoParams(params);
+         if (preSerializedParams == null) {
+             msg.channel.send("Invalid parameters");
+             return;
+         }
+         const serializedParams = <(string|string[])[]> preSerializedParams;
 
          let protocolResponse;
          try {
-             protocolResponse = await protocolRequest(protocolID, orderedParams);
+             protocolResponse = await protocolRequest(protocolID, serializedParams);
          } catch (e) {
              protocolResponse = e;
          }
          
-         msg.channel.send(`\`\`\`json\n${JSON.stringify(protocolResponse)}\`\`\``);
+         msg.channel.send(`\`\`\`${JSON.stringify(protocolResponse)}\`\`\``);
     });
 
     client.login(config.discord.discord_token);
+}
+
+
+// hacky asf
+function serializeStringIntoParams(inStr : string) : (string|string[])[] | null {
+    const lmao = `{content: [${inStr}]}`;
+    try {
+        const parseParams = JSON.parse(lmao);
+        return parseParams;
+    } catch(e) {
+        return null;
+    }
 }
 
 export default register;
