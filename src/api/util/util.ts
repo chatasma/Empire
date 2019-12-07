@@ -102,5 +102,6 @@ export const ChillError = Object.freeze({
     "INVALID_UUID": "UUID is not valid",
     "NO_USER": "No user profile found",
     "INTERNAL_ERROR": null,
-    "INVALID_GAMETYPE": "Not a valid gametype"
+    "INVALID_GAMETYPE": "Not a valid gametype",
+    "NO_MATCH": "No match found"
 });

@@ -17,6 +17,9 @@ function parseRawProtocolRequest(protocolId : number, parameters : (string|strin
             case 3:
                 callbackFn = postNewMatch;
                 break;
+            case 4:
+                callbackFn = getMatchById;
+                break;
             default:
                 callbackFn = () => {
                     return {error: "Invalid Protocol ID"};
@@ -39,6 +42,29 @@ function parseRawProtocolRequest(protocolId : number, parameters : (string|strin
 /*
  * Protocol
  */
+
+function getMatchById(parameters: (string|string[])[]) {
+    return new Promise(async (resolve, reject) => {
+        let fetchResponse : Response;
+        let fetchResult;
+        try {
+            fetchResponse = await fetch(API_BASE + '/api/match/' + parameters[0]);
+            fetchResult = await fetchResponse.json();
+        } catch (e) {
+            reject({content: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR), statusCode: HttpStatus.INTERNAL_SERVER_ERROR});
+            return;
+        }
+
+        if (fetchResponse.status !== HttpStatus.OK) {
+            const contentMessage = fetchResult && fetchResult.message ? fetchResult.message : HttpStatus.getStatusText(fetchResponse.status);
+            reject({content: contentMessage, statusCode: fetchResponse.status});
+            return;
+        }
+
+        resolve({content: fetchResult, statusCode: HttpStatus.OK});
+    });
+}
+
 function postNewMatch(parameters: (string|string[])[]) {
     return new Promise(async (resolve, reject) => {
         let fetchResponse : Response;

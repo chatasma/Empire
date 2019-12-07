@@ -2,7 +2,30 @@ import { ChillMatch, Nullable, MsgoMatchInfo } from "../models/models";
 import { parseMsgoMatchInfoReference } from "../parse/parser";
 import { pgClient } from "../../api/app";
 import pg from 'pg';
-import { generateDynamicParams, generateDynamicParamsOffset } from "../util/dbutil";
+import { generateDynamicParams } from "../util/dbutil";
+import HttpStatus from 'http-status-codes';
+import { ChillError } from "../../api/util/util";
+
+
+export function getMatch(matchnum : number) : Promise<ChillMatch> {
+    return new Promise(async (resolve, reject) => {
+        const chillMatchReq : pg.QueryResult = await pgClient.query('SELECT * FROM ChillMatch WHERE id = $1', [matchnum]);
+        if (chillMatchReq.rowCount === 0) {
+            reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.INVALID_GAMETYPE});
+            return;
+        }
+        const castedMatch : ChillMatch = chillMatchReq.rows[0];
+        if (typeof castedMatch.match_info === 'number') {
+            const preMsgoMatchInfo : MsgoMatchInfo | null = await parseMsgoMatchInfoReference(castedMatch.match_info);
+            if (preMsgoMatchInfo == null) delete castedMatch.match_info;
+            else {
+                if (preMsgoMatchInfo.id) delete preMsgoMatchInfo.id;
+                castedMatch.match_info = <MsgoMatchInfo> preMsgoMatchInfo;
+            }
+        }
+            resolve(castedMatch);
+    });
+}
 
 // Precondition : gametype is 'msgo' & match_info is MsgoMatchInfo and non-null
 export function msgoMatch(match : ChillMatch) : Promise<ChillMatch> {

@@ -3,7 +3,7 @@ import HttpStatus from 'http-status-codes';
 import { getChillStats, parseChillError, createChillStats, ChillError } from '../util/util';
 import tokenCheck from '../auth/tokenCheck';
 import { isChillMatch, ChillMatch, isMsgoMatchInfo, PrettyChillUser, Nullable } from '../../db/models/models';
-import { msgoMatch, matchEnd } from '../../db/match/matchHandler';
+import { msgoMatch, matchEnd, getMatch } from '../../db/match/matchHandler';
 
 const router : Router = Router();
 
@@ -38,6 +38,22 @@ router.post("/player/:userUuid", tokenCheck, async (req : express.Request, res: 
         }
     }
     res.send(chillStats);
+});
+
+router.get("/match/:matchId", async (req : express.Request, res : express.Response) => {
+    let parsedParam : number;
+    try {
+        parsedParam = parseInt(req.params.matchId);
+    } catch (e) {
+        return res.status(HttpStatus.BAD_REQUEST).send({error: HttpStatus.BAD_REQUEST, message: "Could not parse Match ID as integer"});
+    }
+    
+    try {
+        const obtainedMatch : ChillMatch = await getMatch(parsedParam);
+        res.send(obtainedMatch);
+    } catch(e) {
+        return res.status(e.httpError).send(parseChillError(e.httpError, e.chillError));
+    }
 });
 
 router.post("/match", tokenCheck, async (req : express.Request, res: express.Response) => {
