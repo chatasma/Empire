@@ -3,6 +3,7 @@ import pg from 'pg';
 import config from '../config';
 import apiRoute from './routes/api';
 import { SQLTableStatements } from '../db/models/models';
+import bodyParser from 'body-parser';
 
 const PORT = config.api && config.api.api_port ? config.api.api_port : 5000;
 
@@ -39,6 +40,8 @@ async function register() {
     });
 
     const app : express.Application = express();
+
+    app.use(bodyParser.json());
 
     app.use('/api', apiRoute);
 

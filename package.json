@@ -20,6 +20,7 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
+    "body-parser": "^1.19.0",
     "discord.js": "^11.5.1",
     "express": "^4.17.1",
     "http-status-codes": "^1.4.0",

@@ -7,15 +7,10 @@ import { generateDynamicParams, generateDynamicParamsOffset } from "../util/dbut
 // Precondition : gametype is 'msgo' & match_info is MsgoMatchInfo and non-null
 export function msgoMatch(match : ChillMatch) : Promise<ChillMatch> {
     return new Promise(async (resolve, reject) => {
-        if (typeof match.match_info === 'number') {
-            const parsedMsgoMatchInfo : Nullable<MsgoMatchInfo> = await parseMsgoMatchInfoReference(match.match_info);
-            if (parsedMsgoMatchInfo == null) return;
-            const parsedMatchInfo : MsgoMatchInfo = <MsgoMatchInfo> parsedMsgoMatchInfo;
-            await pgClient.query('INSERT INTO MsgoMatchInfo(top_killer) VALUES($1) RETURNING id', [parsedMatchInfo.top_killer]);
-        }
+        const matchInfo : MsgoMatchInfo = <MsgoMatchInfo> match.match_info;
+        await pgClient.query('INSERT INTO MsgoMatchInfo(top_killer) VALUES($1) RETURNING id', [matchInfo.top_killer]);
         const lastValQuery = await pgClient.query('SELECT lastval()');
-        console.log(`last val query ${lastValQuery}`);
-        resolve(await matchEnd(match, lastValQuery.rows[0]));
+        resolve(await matchEnd(match, lastValQuery.rows[0].lastval));
     })
 }
 
@@ -23,19 +18,17 @@ export function matchEnd(match : ChillMatch, matchinfo : number) : Promise<Chill
     return new Promise(async (resolve, reject) => {
         await addWins(match.winners, match.gametype);
         const paramArray : any[] = [];
-        match.winners.forEach((winner) => paramArray.push(winner));
-        match.losers.forEach((loser) => paramArray.push(loser));
+        paramArray.push(match.winners);
+        paramArray.push(match.losers);
         paramArray.push(match.gametype);
-        paramArray.push(matchinfo);
         if (matchinfo < 0) 
-            await pgClient.query(`INSERT INTO ChillMatch(winners, losers, gametype) VALUES('{${generateDynamicParams(match.winners.length)}}', '{${generateDynamicParamsOffset(match.losers.length, match.winners.length + 1)}}', $${match.winners.length + match.losers.length + 1})) RETURNING id`, paramArray);
+            await pgClient.query(`INSERT INTO ChillMatch(winners, losers, gametype) VALUES($1, $2, $3) RETURNING id`, paramArray);
         else {
             paramArray.push(matchinfo);
-            await pgClient.query(`INSERT INTO ChillMatch(winners, losers, gametype, match_info) VALUES('{${generateDynamicParams(match.winners.length)}}', '{${generateDynamicParamsOffset(match.losers.length, match.winners.length + 1)}}', $${match.winners.length + match.losers.length + 1}), $${match.winners.length + match.losers.length + 2}) RETURNING id`, paramArray);
+            await pgClient.query(`INSERT INTO ChillMatch(winners, losers, gametype, match_info) VALUES($1, $2, $3, $4) RETURNING id`, paramArray);
         }
-        
         const matchIDContainer : pg.QueryResult = await pgClient.query(`SELECT lastval()`);
-        const matchInteger = matchIDContainer.rows[0];
+        const matchInteger : number = matchIDContainer.rows[0].lastval;
         const matchObject : pg.QueryResult = await pgClient.query('SELECT * FROM ChillMatch WHERE id = $1', [matchInteger]);
         resolve(<ChillMatch> matchObject.rows[0]);
     });

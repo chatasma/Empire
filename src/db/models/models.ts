@@ -42,7 +42,7 @@ export interface ChillMatch {
 }
 
 export interface MsgoMatchInfo {
-    id: number,
+    id?: number,
     top_killer: string
 }
 
@@ -65,5 +65,5 @@ export function isChillMatch(obj : any) : boolean {
 
 export function isMsgoMatchInfo(obj : any) : boolean {
     if (obj == null) return false;
-    return 'id' in obj && 'top_killer' in obj;
+    return 'top_killer' in obj && typeof obj.top_killer === 'string';
 }

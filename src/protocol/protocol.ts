@@ -44,16 +44,17 @@ function postNewMatch(parameters: (string|string[])[]) {
         let fetchResponse : Response;
         let fetchResult;
         try {
-            fetchResponse = await fetch(API_BASE + '/match', {
+            fetchResponse = await fetch(API_BASE + '/api/match', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': config.api.api_token
                 },
                 body: JSON.stringify({
-                    winners: parameters[0],
-                    losers: parameters[1],
-                    gametype: parameters[2]
+                    'winners': parameters[0],
+                    'losers': parameters[1],
+                    'gametype': parameters[2],
+                    'match_info': parameters[3] != null ? parameters[3] : null
                 })
             });
             fetchResult = await fetchResponse.json();

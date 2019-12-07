@@ -50,10 +50,10 @@ function register() {
 
 // hacky asf
 function serializeStringIntoParams(inStr : string) : (string|string[])[] | null {
-    const lmao = `{content: [${inStr}]}`;
+    const lmao = `{"content": [${inStr}]}`;
     try {
         const parseParams = JSON.parse(lmao);
-        return parseParams;
+        return parseParams.content;
     } catch(e) {
         return null;
     }
