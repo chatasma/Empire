@@ -11,7 +11,7 @@ export function getMatch(matchnum : number) : Promise<ChillMatch> {
     return new Promise(async (resolve, reject) => {
         const chillMatchReq : pg.QueryResult = await pgClient.query('SELECT * FROM ChillMatch WHERE id = $1', [matchnum]);
         if (chillMatchReq.rowCount === 0) {
-            reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.INVALID_GAMETYPE});
+            reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.NO_MATCH});
             return;
         }
         const castedMatch : ChillMatch = chillMatchReq.rows[0];
