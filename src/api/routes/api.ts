@@ -3,7 +3,8 @@ import HttpStatus from 'http-status-codes';
 import { getChillStats, parseChillError, createChillStats, ChillError } from '../util/util';
 import tokenCheck from '../auth/tokenCheck';
 import { isChillMatch, ChillMatch, isMsgoMatchInfo, PrettyChillUser, Nullable } from '../../db/models/models';
-import { msgoMatch, matchEnd, getMatch } from '../../db/match/matchHandler';
+import { msgoMatch, matchEnd, getMatch, resolveMatchInfoReferences } from '../../db/match/matchHandler';
+import { pgClient } from '../app';
 
 const router : Router = Router();
 
@@ -54,6 +55,17 @@ router.get("/match/:matchId", async (req : express.Request, res : express.Respon
     } catch(e) {
         return res.status(e.httpError).send(parseChillError(e.httpError, e.chillError));
     }
+});
+
+router.get("/matches", async (req: express.Request, res: express.Response) => {
+    const matchLimit : number = req.query.limit && req.query.limit <= 50 ? Math.floor(req.query.limit) : 50;
+    const matchesQuery = await pgClient.query('SELECT * FROM ChillMatch ORDER BY "created_at" DESC LIMIT $1', [matchLimit]);
+    if (matchesQuery.rowCount === 0) return res.send(matchesQuery.rows);
+    const parsedMatches : ChillMatch[] = [];
+    for (const rawMatch of matchesQuery.rows) {
+        parsedMatches.push(await resolveMatchInfoReferences(<ChillMatch> rawMatch));
+    }
+    res.send(parsedMatches);
 });
 
 router.post("/match", tokenCheck, async (req : express.Request, res: express.Response) => {

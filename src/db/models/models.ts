@@ -52,8 +52,8 @@ export const SQLTableStatements = Object.freeze({
     "ChillUser": "ChillUser(uuid CHAR(36) PRIMARY KEY, matches integer[] DEFAULT '{}')",
     "ChillNumericMetric": "ChillNumericMetric(uuid CHAR(36) PRIMARY KEY, gametype VARCHAR(16), metric VARCHAR(16), amount integer)",
 
-    "ChillMatch": "ChillMatch(id SERIAL PRIMARY KEY, winners CHAR(36)[], losers CHAR(36)[], gametype VARCHAR(16), match_info integer)",
-    "MsgoMatchInfo": "MsgoMatchInfo(id SERIAL PRIMARY KEY, top_killer CHAR(36))"
+    "ChillMatch": "ChillMatch(id SERIAL PRIMARY KEY, created_at TIMESTAMP DEFAULT NOW(), winners CHAR(36)[], losers CHAR(36)[], gametype VARCHAR(16), match_info integer)",
+    "MsgoMatchInfo": "MsgoMatchInfo(id SERIAL PRIMARY KEY, top_killer VARCHAR(36))"
 });
 
 // Type Guards

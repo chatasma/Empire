@@ -15,15 +15,22 @@ export function getMatch(matchnum : number) : Promise<ChillMatch> {
             return;
         }
         const castedMatch : ChillMatch = chillMatchReq.rows[0];
-        if (typeof castedMatch.match_info === 'number') {
-            const preMsgoMatchInfo : MsgoMatchInfo | null = await parseMsgoMatchInfoReference(castedMatch.match_info);
-            if (preMsgoMatchInfo == null) delete castedMatch.match_info;
+        const parsedMatchInfoMatch : ChillMatch = await resolveMatchInfoReferences(castedMatch);
+        resolve(parsedMatchInfoMatch);
+    });
+}
+
+export function resolveMatchInfoReferences(coolMatch : ChillMatch) : Promise<ChillMatch> {
+    return new Promise(async (resolve, reject) => {
+        if (typeof coolMatch.match_info === 'number') {
+            const preMsgoMatchInfo : MsgoMatchInfo | null = await parseMsgoMatchInfoReference(coolMatch.match_info);
+            if (preMsgoMatchInfo == null) delete coolMatch.match_info;
             else {
                 if (preMsgoMatchInfo.id) delete preMsgoMatchInfo.id;
-                castedMatch.match_info = <MsgoMatchInfo> preMsgoMatchInfo;
+                coolMatch.match_info = <MsgoMatchInfo> preMsgoMatchInfo;
             }
         }
-            resolve(castedMatch);
+        resolve(coolMatch);
     });
 }
 
@@ -60,9 +67,9 @@ export function matchEnd(match : ChillMatch, matchinfo : number) : Promise<Chill
 export function addWins(uuids : string[], gametype : string) : Promise<void> {
     return new Promise(async (resolve, reject) => {
         const paramArray : any[] = [];
-        uuids.forEach((val) => paramArray.push(val));
+        paramArray.push(uuids);
         paramArray.push(gametype);
-        await pgClient.query(`UPDATE ChillNumericMetric SET amount = amount + 1 WHERE uuid IN (${generateDynamicParams(uuids.length)}) AND gametype = $${uuids.length + 1} AND metric = 'wins'`, paramArray);
+        await pgClient.query(`UPDATE ChillNumericMetric SET amount = amount + 1 WHERE uuid IN ($1) AND gametype = $2 AND metric = 'wins'`, paramArray);
         resolve();
     });
 }
