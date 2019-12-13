@@ -9,10 +9,13 @@ export type Nullable<T> = T | null;
  */
 
  export interface PrettyChillUser {
-     uuid: string;
+     uuid: string,
      wins: {gametype: string, amount: number}[],
-     losses: {gametype: string, amount: number}[]
-     matches: number[]
+     losses: {gametype: string, amount: number}[],
+     matches: number[],
+     coins: number,
+     level: number,
+     username: string
  }
 
 
@@ -22,8 +25,11 @@ export type Nullable<T> = T | null;
  */
 
 export interface ChillUser {
-    uuid: string;
-    matches: number[];
+    uuid: string,
+    matches: number[],
+    coins: number,
+    level: number,
+    username: string
 }
 
 export interface ChillNumericMetric {
@@ -49,7 +55,7 @@ export interface MsgoMatchInfo {
 // SQL Tables
 
 export const SQLTableStatements = Object.freeze({
-    "ChillUser": "ChillUser(uuid CHAR(36) PRIMARY KEY, matches integer[] DEFAULT '{}')",
+    "ChillUser": "ChillUser(uuid CHAR(36) PRIMARY KEY, username VARCHAR(16), coins integer DEFAULT 0, level integer DEFAULT 1, matches integer[] DEFAULT '{}')",
     "ChillNumericMetric": "ChillNumericMetric(uuid CHAR(36) PRIMARY KEY, gametype VARCHAR(16), metric VARCHAR(16), amount integer)",
 
     "ChillMatch": "ChillMatch(id SERIAL PRIMARY KEY, created_at TIMESTAMP DEFAULT NOW(), winners CHAR(36)[], losers CHAR(36)[], gametype VARCHAR(16), match_info integer)",

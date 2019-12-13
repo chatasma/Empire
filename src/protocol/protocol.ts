@@ -106,7 +106,11 @@ function createChillUser(parameters: (string|string[])[]) {
         try {
             fetchResponse = await fetch(API_BASE + '/api/player/' + parameters[0], {
                 method: 'POST',
+                body: JSON.stringify({
+                    'username': parameters[1]
+                }),
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': config.api.api_token
                 }
             });

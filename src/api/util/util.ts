@@ -2,9 +2,15 @@ import pg from 'pg';
 import { pgClient } from '../app'
 import HttpStatus from 'http-status-codes';
 import { ChillUser, ChillNumericMetric, PrettyChillUser } from '../../db/models/models';
+import express from 'express';
 
 export function validateUuid(inStr : string) {
     const regexResult : RegExpMatchArray | null = inStr.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    return regexResult;
+}
+
+export function validateUsername(inStr: string) {
+    const regexResult : RegExpMatchArray | null = inStr.match(/^[a-z0-9_]{3,16}$/gi);
     return regexResult;
 }
 
@@ -42,7 +48,10 @@ export function getChillStats(inStr: string) : Promise<PrettyChillUser> {
             uuid: inStr,
             wins: wins,
             losses: losses,
-            matches: retrievedUser.matches
+            matches: retrievedUser.matches,
+            coins: retrievedUser.coins,
+            level: retrievedUser.level,
+            username: retrievedUser.username
         } 
 
         resolve(prettyChillUser);
@@ -69,22 +78,28 @@ export function assembleDynamicUpdateParams(tablename : string, cols : object, f
     return query.join(' ');
 }
 
-export function createChillStats(inStr: string, skipUuidCheck: boolean) : Promise<PrettyChillUser> {
+export function createChillStats(inUuid: string, username: string, skipUuidCheck: boolean) : Promise<PrettyChillUser> {
     return new Promise(async (resolve, reject) => {
         if (!skipUuidCheck) {
-            const regexResult = validateUuid(inStr);
+            const regexResult = validateUuid(inUuid);
             if (regexResult == null) {
                 reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.INVALID_UUID});
                 return;
             }
         }
 
-        await pgClient.query(`INSERT INTO ChillUser(uuid) VALUES($1)`, [inStr]);
+        const usernameResult = validateUsername(username);
+        if (usernameResult == null) {
+            reject({httpError: HttpStatus.BAD_REQUEST, chillError: ChillError.INVALID_USERNAME});
+            return;
+        }
+
+        await pgClient.query(`INSERT INTO ChillUser(uuid, username) VALUES($1, $2)`, [inUuid, username]);
         
 
         let chillStats : PrettyChillUser;
         try {
-            chillStats = await getChillStats(inStr);
+            chillStats = await getChillStats(inUuid);
         } catch(e) {
             reject({httpError: HttpStatus.INTERNAL_SERVER_ERROR, chillError: ChillError.INTERNAL_ERROR});
             return;
@@ -93,15 +108,22 @@ export function createChillStats(inStr: string, skipUuidCheck: boolean) : Promis
     });
 }
 
+export function badRequestWrapper(res: express.Response, message: string) {
+    return res.status(HttpStatus.BAD_REQUEST).send({error: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST), message: message});
+}
+
 export function parseChillError(httpStatusCode: number, chillErr: string | null) {
     const httpError : string = HttpStatus.getStatusText(httpStatusCode);
     return (chillErr == null ? {error: httpError} : {error: httpError, message: chillErr});
 }
+
 
 export const ChillError = Object.freeze({
     "INVALID_UUID": "UUID is not valid",
     "NO_USER": "No user profile found",
     "INTERNAL_ERROR": null,
     "INVALID_GAMETYPE": "Not a valid gametype",
-    "NO_MATCH": "No match found"
+    "NO_MATCH": "No match found",
+    "GAMEMODE_LEADERBOARD_NOT_SUPPORTED": "Gamemode leaderboards are not implemented yet",
+    "INVALID_USERNAME": "Invalid username"
 });
